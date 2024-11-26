@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+</head>
+<body>
+    <header>
+        <div class="icon-container">
+            <a href="/app" class="icon">
+                <img src="{{ url_for('static', filename='images/home.png') }}" alt="home">
+            </a>
+            <div class="bottom-icons">
+                <input type="text" id="search-input" placeholder="{{ tr['search_placeholder'] }}" style="display:none;z-index: 10001;">
+                <a href="{{ url_for('create') }}" class="icon"><img src="{{ url_for('static', filename='images/create.png') }}" alt="create"></a>
+                <div class="icon">
+                    <a href="{{ url_for('notifications') }}">
+                        <img src="{{ url_for('static', filename='images/notification.png') }}" alt="notification">
+                    </a>
+                </div>
+                <a href="{{ url_for('profile', userid=session['userid']) }}">
+                    <div class="icon" style="border-radius: 90px !important;"><img src="{{ url_for('static', filename='images/' + session['avatar']) }}" alt="user"></div>
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="user-square">
+        <h3>{{ tr['search_placeholder'] }}</h3>
+        <div id="user-results"></div>
+    </div>
+    <div class="container">
+        <div class="profile-header" style="
+            {% if user.subscription_status != 'Free' and user.banner %}
+                background-image: url('{{ url_for('static', filename='images/' + user.banner) }}');
+            {% else %}
+                background-color: rgba(34, 34, 34, 0.5);
+            {% endif %}
+        ">
+            <div class="icons" id="avatar-container">
+                <img src="{{ url_for('static', filename='images/' + user.avatar) }}" alt="{{ tr['user'] }}" id="avatar-image">
+                {% if session['userid'] == user.userid %}
+                <div class="overlay">
+                    <img src="{{ url_for('static', filename='images/crayon.png') }}" alt="{{ tr['edit'] }}" class="edit-icon">
+                </div>
+                {% endif %}
+            </div>
+            <div class="info">
+                <h1>
+                    {{ user.nickname }}
+                    {% if user.is_verified %}
+                        <img src="{{ url_for('static', filename='images/verified.png') }}" alt="{{ tr['verified'] }}" class="verified-icon">
+                    {% endif %}
+                    {% if user.is_banned %}
+                        <img src="{{ url_for('static', filename='images/ban.png') }}" alt="{{ tr['banned'] }}" class="ban-icon">
+                    {% endif %}
+                </h1>
+                <div class="stats">
+                    <p><span class="stat-number">{{ following_count }}</span> <span class="stat-label">{{ tr['following'] }}</span></p>
+                    <p><span class="stat-number">{{ followers_count }}</span> <span class="stat-label">{{ tr['followers'] }}</span></p>
+                    <p><span class="stat-number">{{ total_likes }}</span> <span class="stat-label">{{ tr['total_likes'] }}</span></p>
+                    {% if session['userid'] != user.userid %}
+                    <div class="button-container">
+                        {% if is_subscribed %}
+                            <button class="unsubscribe-btn" data-user-id="{{ user.userid }}">
+                                {{ tr['unsubscribe'] }}
+                            </button>
+                        {% else %}
+                            <button class="subscribe-btn" data-user-id="{{ user.userid }}">
+                                {{ tr['subscribe'] }}
+                            </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if session['userid'] == user.userid %}
+            <div class="settings-icon">
+                <a href="/settings">
+                    <img src="{{ url_for('static', filename='images/gear.png') }}" alt="Settings">
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        <input type="file" id="avatar-input" name="avatar" style="display: none;" accept="image/*">
+        <div class="posts-container">
+            <div class="posts">
+                {% for post in posts %}
+                    <div class="post" data-post-id="{{ post.postid }}">
+                        <img src="{{ url_for('static', filename='uploads/' + post.image) }}" alt="{{ tr['post_image'] }}">
+                        <div class="like-info">
+                            <img src="{{ url_for('static', filename='images/like.png') }}" alt="{{ tr['likes'] }}" style="pointer-events: none; cursor: default;">
+                            <span>{{ post.likes_count }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div id="notification" class="notification"></div>
+    <div id="image-modal" class="image-modal">
+        <div class="image-modal-content">
+            <span class="close">&times;</span>
+            <div class="image-container">
+                <img id="modal-image" src="" alt="{{ tr['enlarged_image'] }}">
+                <div id="like-animation" class="like-animation">&#10084;</div>
+            </div>
+            <div class="sidebar comment-section">
+                <div class="comment-list" id="comment-list">
+                    <img src="${commentData.userAvatar}" alt="{{ tr['user_avatar'] }}" class="user-avatar">
+                    <div class="comment-content">
+                        <div class="comment-header" style="margin: -4px;">
+                            <strong class="comment-nickname">${commentData.userNickname}</strong>
+                            {% if user.is_verified %}
+                                <img src="{{ url_for('static', filename='images/verified.png') }}" alt="{{ tr['verified'] }}" class="verified-icon">
+                            {% endif %}
+                            {% if user.is_banned %}
+                                <img src="{{ url_for('static', filename='images/ban.png') }}" alt="{{ tr['banned'] }}" class="banned-icon">
+                            {% endif %}
+                            <span class="comment-date" style="color: #333">${commentData.createdAt}</span>
+                        </div>
+                        <p class="comment-text">${commentData.content}</p>
+                    </div>
+                </div>
+                <div class="add-comment">
+                    <input type="text" class="input-field" id="comment-input" placeholder="{{ tr['write_comment'] }}">
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    document.getElementById('modal-image').addEventListener('dblclick', function() {
+        const likeAnimation = document.getElementById('like-animation');
+        const postId = this.dataset.postId; 
+
+        fetch('/like_post', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ post_id: postId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                if (data.is_liked) {
+                    likeAnimation.classList.add('show');
+                    setTimeout(() => likeAnimation.classList.remove('show'), 800);
+                } else {
+                    // Optionally handle unlike animation if needed
+                }
+            } else {
+                console.error('Failed to toggle like:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+
+
+    function showNotification(message) {
+        var notification = document.getElementById('notification');
+        notification.textContent = message; 
+        notification.classList.add('show'); 
+        
+        setTimeout(function() {
+            notification.classList.add('hide'); 
+        }, 15000);
+
+        setTimeout(function() {
+            notification.classList.remove('show');
+            notification.classList.remove('hide');
+        }, 15500);
+    }
+
+    document.getElementById('avatar-container').addEventListener('click', function() {
+        if ({{ 'true' if session['userid'] == user.userid else 'false' }}) {
+            document.getElementById('avatar-input').click();
+        }
+    });
+
+    document.getElementById('avatar-input').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            fetch('/change-avatar', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('avatar-image').src = URL.createObjectURL(file);
+                } else {
+                    alert('Failed to change avatar.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    });
+    document.querySelectorAll('.posts .post img').forEach(img => {
+        img.addEventListener('click', function() {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-image');
+            const commentList = document.getElementById('comment-list');
+            const postId = this.closest('.post').dataset.postId;
+
+            modalImg.setAttribute('data-post-id', postId);
+
+            modal.style.display = "flex";
+            modalImg.src = this.src;
+
+            fetch(`/post/${postId}/commentss`)
+                .then(response => response.json())
+                .then(comments => {
+                    commentList.innerHTML = '';
+                    comments.forEach(comment => {
+                        const commentDiv = document.createElement('div');
+                        commentDiv.classList.add('comment');
+                        commentDiv.innerHTML = `
+                            <img src="${comment.user_avatar}" alt="User Avatar" class="user-avatar">
+                            <div class="comment-content">
+                                <strong>${comment.user_nickname}</strong>
+                                <p>${comment.content}</p>
+                                <span>${comment.created_at}</span>
+                            </div>
+                        `;
+                        commentList.appendChild(commentDiv);
+                    });
+                })
+                .catch(error => console.error('Error fetching comments:', error));
+        });
+    });
+
+    document.getElementById('comment-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const content = this.value.trim();
+            const postId = document.getElementById('modal-image').getAttribute('data-post-id');
+
+            if (content.length > 175) {
+                showNotification('Comment exceeds 175 characters limit.');
+                return;
+            }
+
+            if (content !== '') {
+                fetch('/add_comments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ post_id: postId, content: content })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const commentDiv = document.createElement('div');
+                        commentDiv.classList.add('comment');
+                        commentDiv.innerHTML = `
+                            <img src="${data.comment.user_avatar}" alt="User Avatar" class="user-avatar">
+                            <div class="comment-content">
+                                <strong>${data.comment.user_nickname}</strong>
+                                <p>${data.comment.content}</p>
+                                <span>${data.comment.created_at}</span>
+                            </div>
+                        `;
+                        document.getElementById('comment-list').appendChild(commentDiv);
+                        this.value = ''; 
+                    } else {
+                        showNotification(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Failed to add comment due to a server error.');
+                });
+            }
+        }
+    });
+
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('image-modal').style.display = "none";
+    });
+
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('image-modal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    });
+
+    $(document).ready(function() {
+            let inactivityTimer;
+            const inactivityTimeout = 10000;
+
+            function resetInputField() {
+                $('#search-input').css('animation', 'slideInputOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).css('display', 'none').dequeue();
+                    $('#search-icon').removeClass('hidden').css('animation', 'slideIconIn 0.5s forwards');
+                });
+            }
+
+            function startInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(resetInputField, inactivityTimeout);
+            }
+
+            $('#search-icon').click(function() {
+                $(this).css('animation', 'slideIconOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).addClass('hidden').dequeue();
+                });
+
+                $('#search-input').css('display', 'block')
+                    .css('animation', 'slideInputIn 0.5s forwards')
+                    .animate({ width: '200px' }, 500);
+
+                startInactivityTimer();
+            });
+
+            $('#search-input').on('input', function() {
+                startInactivityTimer();
+            });
+
+            $('#search-input').keypress(function(e) {
+                if (e.which == 13) {
+                    e.preventDefault();
+                    searchUsers();
+                }
+            });
+            function searchUsers() {
+                const searchQuery = $('#search-input').val().trim().toLowerCase();
+                if (searchQuery.length > 0) {
+                    const easterEggs = ['смысл жизни', 'the meaning of life', 'meaning of life'];
+                    const bagQuestions = ['что в мешочке?', "what's in the bag?"];
+                    const matrixQueries = ['матрица'];
+                    const secretMemes = ['секретный мем'];
+                    const error404 = ['404'];
+                    const pickMe = ['пикми'];
+                    const quitQueries = ['quit', 'выйти'];
+
+                    if (quitQueries.includes(searchQuery)) {
+                        window.location.href = '/logout';
+                    } else if (easterEggs.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Смысл жизни найден! Подождите... Ошибка 404: смысл не найден. Может, попробуешь поискать котиков?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (bagQuestions.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ничего особенного... просто немного мемов и чья-то забытая уверенность в себе.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (matrixQueries.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Красная или синяя таблетка?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (secretMemes.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ты нашел секретный мем! Но он настолько секретный, что мы его забыли.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (error404.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ошибка 404: здоровый сон не найден. Но мы нашли тебе кучу мемов!
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (pickMe.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Если надо себя выделять, чтобы понравиться, может, стоит пересмотреть, кому ты пытаешься понравиться?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/search_users',
+                            data: { search_query: $('#search-input').val() },
+                            success: function(response) {
+                                const userResults = $('#user-results');
+                                userResults.empty();
+                                response.forEach(user => {
+                                    const userId = user.userid || 'defaultId';
+                                    const verifiedIcon = user.is_verified ? `<img src="/static/images/verified.png" alt="Verified" class="verified-icon">` : '';
+
+                                    userResults.append(`
+                                        <div class="user-result">
+                                            <img src="${user.avatar}" alt="${user.nickname}'s avatar" />
+                                            <a href="/profile/${userId}" class="user-nickname">${user.nickname}</a>
+                                            ${verifiedIcon}
+                                            <span>${user.subscriber_count} {{ tr['subscribers'] }}</span>
+                                        </div>
+                                    `);
+                                });
+                                $('.user-square').show();
+
+                                setTimeout(() => {
+                                    $('.user-result').each(function() {
+                                        $(this).addClass('visible');
+                                    });
+                                }, 1000);
+                            }
+                        });
+                        $('main').hide();
+                        $('.sidebar').hide();
+                    }
+                } else {
+                    $('.user-square').hide();
+                    $('main').show();
+                    $('.sidebar').show();
+                }
+            }
+        });
+        function handleSubscribeError(xhr) {
+            console.error('AJAX Error:', xhr.responseText);
+            if (xhr.responseText && xhr.responseText.includes("cannot subscribe to yourself")) {
+                var errorMessage = $('<div>', {
+                    class: 'error-message',
+                    text: 'You cannot subscribe to yourself'
+                }).appendTo('body');
+
+                setTimeout(function() {
+                    errorMessage.remove();
+                }, 3000);
+            } else {
+                console.error('AJAX Error:', xhr);
+            }
+        }
+
+        function refreshPage() {
+            location.reload(true);
+        }
+
+        $('.subscribe-btn').click(function() {
+            var $button = $(this);
+            var userId = $button.data('user-id');
+
+            $.ajax({
+                type: 'POST',
+                url: '/subscribe',
+                contentType: 'application/json',
+                data: JSON.stringify({ user_id: userId }),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $button.text('Unsubscribe').removeClass('subscribe-btn').addClass('unsubscribe-btn');
+                        refreshPage();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    handleSubscribeError(xhr);
+                }
+            });
+        });
+
+        $('.unsubscribe-btn').click(function() {
+            var $button = $(this);
+            var userId = $button.data('user-id');
+
+            $.ajax({
+                type: 'POST',
+                url: '/unsubscribe',
+                contentType: 'application/json',
+                data: JSON.stringify({ user_id: userId }),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $button.text('Subscribe').removeClass('unsubscribe-btn').addClass('subscribe-btn');
+                        refreshPage();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    handleSubscribeError(xhr);
+                }
+            });
+        });
+</script>
+</body>
+</html>

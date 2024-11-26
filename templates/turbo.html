@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quirx | Turbo</title>
+    <link rel="stylesheet" href="static/css/turbo.css">
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+</head>
+<body>
+    <header>
+        <div class="logo">Quirx</div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li class="moreeffect"><a href="#">Support</a><span class="soon-text">Soon</span></li>
+                <li><a href="/turbo">Turbo</a></li>
+                <li class="moreeffect"><a href="#">More</a><span class="soon-text">Soon</span></li>
+            </ul>
+        </nav>
+        <button class="open-quirx">Open Quirx</button>
+    </header>
+    <main>
+        <div class="content">
+            <div class="image-content">
+                <img src="static/images/turbo-pet.png" alt="Turbo pet Image">
+            </div>
+            <div class="text-content">
+                <h1 class="slogan">Always be the center of attention with Turbo</h1>
+                <p class="description">Subscribing with Turbo will give you access to unique animated avatars, special avatar frames, and priority display of your comments.</p>
+            </div>
+        </div>
+        <div class="left-square">
+            <ul class="advantages-list">
+                <li><img src="static/images/icon1.png" alt="Icon"> Special icons</li>
+                <li><img src="static/images/icon2.png" alt="Icon"> Turbo-reactions</li>
+                <li><img src="static/images/icon3.png" alt="Icon"> Turbo-exclusive themes</li>
+                <li><img src="static/images/icon4.png" alt="Icon"> Personalized meme recommendations</li>
+            </ul>
+            <button class="subscribe-button" onclick="openPaymentModal('Turbo', 1)">Subscribe</button>
+        </div>
+        <div class="right-square">
+            <ul class="advantages-list">
+                <li><img src="static/images/icon5.png" alt="Icon"> Animated avatars</li>
+                <li><img src="static/images/icon6.png" alt="Icon"> All features of Turbo</li>
+                <li><img src="static/images/icon7.png" alt="Icon"> Special avatar frame</li>
+                <li><img src="static/images/icon8.png" alt="Icon"> 100 MB downloads</li>
+                <li><img src="static/images/icon9.png" alt="Icon"> Prioritized display of comments</li>
+            </ul>
+            <button class="subscribe-button" onclick="openPaymentModal('Turbo X', 2)">Subscribe</button>
+        </div>
+    </main>
+
+    <div id="paymentModal" class="payment-modal">
+        <div class="payment-modal-content">
+            <span class="close" onclick="closePaymentModal()">&times;</span>
+            <h2>Quirx Pay</h2>
+            <form id="paymentForm">
+                <label for="cardNumber">Card Number:</label>
+                <input type="text" id="cardNumber" name="cardNumber" class="full-width" required maxlength="19" placeholder="xxxx xxxx xxxx xxxx">
+
+                <div class="card-details">
+                    <div>
+                        <label for="expiryDate">Expiry Date:</label>
+                        <input type="text" id="expiryDate" name="expiryDate" required>
+                    </div>
+                    <div>
+                        <label for="cvc">CVC:</label>
+                        <input type="text" id="cvc" name="cvc" required maxlength="3">
+                    </div>
+                </div>
+
+                <button type="button" class="pay-button" onclick="processPayment()">Pay</button>
+            </form>
+
+            <!-- PayPal Button Container -->
+            {% if user and user.subscription_status != 'Turbo' %}
+            <div id="paypal-button-container"></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://www.paypal.com/sdk/js?client-id=AZ07eJWa3bHi5UZpNxA5bDMN3eOoIPaKBCkQWA4fuk-MKuCm163jqvGlQcV9lUPJ_QmE2vAbdpk964hG&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+    <script src="static/js/turbo.js"></script>
+
+    <script>
+        paypal.Buttons({
+            style: {
+                shape: 'rect',
+                color: 'black',
+                layout: 'horizontal',
+                label: 'paypal'
+            },
+            createSubscription: function(data, actions) {
+                return actions.subscription.create({
+                    plan_id: 'P-8XY3530852482233MM25SG4I'
+                });
+            },
+            onApprove: function(data, actions) {
+                alert('Subscription successful! ID: ' + data.subscriptionID);
+                window.location.href = '/subscribe/success';
+            },
+            onError: function(err) {
+                console.error('ВАЖНО: PayPal Error', err);
+            }
+        }).render('#paypal-button-container');
+    </script>
+</body>
+</html>

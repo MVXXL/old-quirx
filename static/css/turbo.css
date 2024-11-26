@@ -1,0 +1,653 @@
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
+body {
+    color: #fff;
+    background: linear-gradient(to bottom right, 
+        #399BD2 2%, 
+        #74B6B3 27%, 
+        #5BCBC7 54%, 
+        #74B6B3 78%, 
+        #1FE1A7 100%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+::-webkit-scrollbar {
+    width: 12px; 
+}
+
+::-webkit-scrollbar-track {
+    background: #0F0F0F; 
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #888; 
+    border-radius: 20px; 
+    border: 3px solid #0F0F0F; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+}
+
+.logo {
+    font-family: 'Lilita One', cursive;
+    font-size: 24px;
+    margin-right: 50px;
+    user-select: none;
+    cursor: default;
+}
+
+nav {
+    flex: 1;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 18px;
+}
+
+nav a:hover {
+    color: #dddddd;
+}
+
+.open-quirx {
+    margin-left: 50px;
+    padding: 10px 20px;
+    background-color: #fff;
+    color: #000;
+    border-radius: 90px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    height: 100vh;
+}
+
+.content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    transform: translateY(-150%); 
+}
+
+.text-content {
+    max-width: 50%;
+    transform: translateX(15%);
+    text-align: left;
+    width: 35%;  
+    white-space: normal;  
+}
+
+.image-content {
+    max-width: 20%;
+    transform: translateX(25%);
+}
+
+.image-content img {
+    width: 70%;
+    height: auto;
+}
+
+.slogan {
+    font-size: 32px;
+    margin: 0;
+}
+
+.description {
+    font-size: 18px;
+    margin: 10px 0 0;
+}
+
+
+.left-square, .right-square {
+    position: absolute;
+    top: 60%; 
+    width: 400px;
+    height: 400px;
+    background-color: rgba(34, 34, 34, 0.5); 
+    border-radius: 10px;
+    padding: 20px; 
+    box-sizing: border-box;
+    color: #ffffff; 
+    font-family: Arial, sans-serif; 
+    display: flex; 
+    flex-direction: column;
+    justify-content: space-between; 
+}
+
+.left-square {
+    transform: translate(-100%,-50%);
+}
+
+.right-square {
+    transform: translate(100%,-50%);
+}
+
+.left-square::before, .right-square::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 18px; 
+    font-weight: bold;
+    font-family: Arial, sans-serif; }
+
+.left-square::before {
+    content: "Turbo";
+}
+
+.right-square::before {
+    content: "Turbo X";
+}
+
+.advantages-list {
+    list-style-type: none; 
+    padding: 0; 
+    margin: 0;
+}
+
+.advantages-list li {
+    display: flex; 
+    align-items: center; 
+    margin-bottom: 10px; 
+    font-weight: bold;
+    transform: translate(4%, 200%);
+    font-size: 16px;
+}
+
+.advantages-list img {
+    width: 32px;
+    height: 32px; 
+    margin-right: 10px; 
+}
+
+.subscribe-button {
+    display: block; 
+    width: 70%;
+    padding: 10px 0; 
+    background-color: #ffffff; 
+    color: #000000; 
+    border: none; 
+    transform: translate(20%, -50%);
+    border-radius: 30px; 
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center; 
+    cursor: pointer; 
+}
+
+.subscribe-button:hover {
+    background-color: #f0f0f0; 
+}
+
+.moreeffect {
+    position: relative;
+    text-align: center;
+    margin-top: 0;
+}
+
+.moreeffect a {
+    text-decoration: none;
+    transition: color 0.10s ease;
+}
+
+.moreeffect a:hover {
+    color: #dddddd;
+}
+
+.soon-text {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(34, 34, 34, 0.5);
+    color: #ffffff;
+    font-size: 16px;
+    padding: 5px 10px;
+    border-radius: 15px;
+    white-space: nowrap;
+    transition: opacity 0.2s ease-in, visibility 0s linear 0.2s;
+}
+
+.moreeffect:hover .soon-text {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease-in, visibility 0s;
+}
+
+.payment-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.payment-modal-content {
+    margin-top: 100px;
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 30%;
+    border-radius: 15px;
+    box-sizing: border-box;
+    min-height: 330px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+h2 {
+    color: black;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+#paymentForm label {
+    color: black;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+#cardNumber,
+#expiryDate,
+#cvc {
+    color: black; 
+    background-color: white; 
+    border: 2px solid #ccc; 
+    border-radius: 10px;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+#cardNumber {
+    margin-bottom: 20px;
+}
+
+.payment-modal-content input {
+    width: 100%;
+    font-size: 14px;
+}
+
+.full-width {
+    width: 100%;
+    padding: 8px;
+    margin-top: 2px;
+    box-sizing: border-box;
+}
+
+.card-details {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.card-details div {
+    flex: 1;
+}
+
+.card-details input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.pay-button {
+    margin-top: 20px; 
+    background-color: black;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    float: right; 
+}
+
+.pay-button:hover {
+    background-color: #333;
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 10px 20px;
+    }
+
+    .logo {
+        margin-right: 20px;
+        font-size: 20px;
+    }
+
+    .payment-modal-content {
+        width: 80%;
+    }
+
+    .card-details {
+        flex-direction: column;
+    }
+
+    nav ul {
+        gap: 10px;
+    }
+
+    nav a {
+        font-size: 14px;
+    }
+
+    .image-content img {
+        width: 150%;
+        height: auto;
+        transform: translateX(-40%);
+    }
+
+    .slogan {
+        font-size: 18px;
+        margin: 0;
+    }
+
+    .description {
+        font-size: 16px;
+        margin: 10px 0 0;
+    }
+
+    .content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 150%;
+        position: relative;
+        transform: translateY(-130%); 
+    }
+
+    .text-content {
+        max-width: 50%;
+        transform: translateX(10%);
+        text-align: left;
+        width: 70%;  
+        white-space: normal;  
+    }
+
+    .open-quirx {
+        margin-left: 10px; 
+        margin-right: 0; 
+        border-radius: 60px;
+        padding: 8px 16px; 
+        font-size: 14px; 
+    }
+
+    .left-square, .right-square {
+        position: absolute;
+        top: 60%; 
+        width: 300px;
+        height: 390px;
+        background-color: rgba(34, 34, 34, 0.5); 
+        border-radius: 10px;
+        padding: 20px; 
+        box-sizing: border-box;
+        color: #ffffff; 
+        font-family: Arial, sans-serif; 
+        display: flex; 
+        flex-direction: column;
+        justify-content: space-between; 
+    }
+
+    .left-square {
+        transform: translate(0%,-10%);
+    }
+
+    .right-square {
+        transform: translate(0%,100%);
+    }
+
+    .left-square::before, .right-square::before {
+        content: attr(data-label);
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 18px; 
+        font-weight: bold;
+        font-family: Arial, sans-serif; 
+    }
+
+    .left-square::before {
+        content: "Turbo";
+    }
+
+    .right-square::before {
+        content: "Turbo X";
+    }
+
+    .advantages-list {
+        list-style-type: none; 
+        padding: 0; 
+        margin: 0;
+    }
+
+    .advantages-list li {
+        display: flex; 
+        align-items: center; 
+        margin-bottom: 10px; 
+        font-weight: bold;
+        transform: translate(4%, 200%);
+        font-size: 16px;
+    }
+
+    .advantages-list img {
+        width: 32px;
+        height: 32px; 
+        margin-right: 10px; 
+    }
+
+    .subscribe-button {
+        display: block; 
+        width: 70%;
+        padding: 10px 0; 
+        background-color: #ffffff; 
+        color: #000000; 
+        border: none; 
+        transform: translate(20%, -50%);
+        border-radius: 30px; 
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center; 
+        cursor: pointer; 
+    }
+
+    .subscribe-button:hover {
+        background-color: #f0f0f0; 
+    }
+}
+
+
+@media (max-width: 375px) {
+    .open-quirx {
+        margin-left: 10px; 
+        border-radius: 60px;
+        font-size: 2px;
+        padding: 2px 2px;
+    }
+
+    .slogan {
+        font-size: 18px;
+        margin: 0;
+    }
+
+    .description {
+        font-size: 16px;
+        margin: 20px 0 0;
+    }
+
+    .content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 300%;
+        position: relative;
+        transform: translateY(-90%); 
+    }
+
+    .text-content {
+        max-width: 50%;
+        transform: translateX(10%);
+        text-align: left;
+        width: 70%;  
+        white-space: normal;  
+    }
+
+    .open-quirx {
+        margin-left: 10px;
+        padding: 2px 4px;
+        background-color: #fff;
+        color: #000;
+        border-radius: 20px;
+        border: none;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+    .left-square, .right-square {
+        position: absolute;
+        top: 60%; 
+        width: 300px;
+        height: 385px;
+        background-color: rgba(34, 34, 34, 0.5); 
+        border-radius: 10px;
+        padding: 20px; 
+        box-sizing: border-box;
+        color: #ffffff; 
+        font-family: Arial, sans-serif; 
+        display: flex; 
+        flex-direction: column;
+        justify-content: space-between; 
+    }
+
+    .left-square {
+        transform: translate(0%,-10%);
+    }
+
+    .right-square {
+        transform: translate(0%,100%);
+    }
+
+    .left-square::before, .right-square::before {
+        content: attr(data-label);
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 18px; 
+        font-weight: bold;
+        font-family: Arial, sans-serif; 
+    }
+
+    .left-square::before {
+        content: "Turbo";
+    }
+
+    .right-square::before {
+        content: "Turbo X";
+    }
+
+    .advantages-list {
+        list-style-type: none; 
+        padding: 0; 
+        margin: 0;
+    }
+
+    .advantages-list li {
+        display: flex; 
+        align-items: center; 
+        margin-bottom: 10px; 
+        font-weight: bold;
+        transform: translate(4%, 200%);
+        font-size: 16px;
+    }
+
+    .advantages-list img {
+        width: 32px;
+        height: 32px; 
+        margin-right: 10px; 
+    }
+
+    .subscribe-button {
+        display: block; 
+        width: 70%;
+        padding: 10px 0; 
+        background-color: #ffffff; 
+        color: #000000; 
+        border: none; 
+        transform: translate(20%, -50%);
+        border-radius: 30px; 
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center; 
+        cursor: pointer; 
+    }
+
+    .subscribe-button:hover {
+        background-color: #f0f0f0; 
+    }
+}
+}

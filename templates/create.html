@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quirx | Create</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/create.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+</head>
+<body>
+    <header>
+        <div class="icon-container">
+            <a href="/app" class="icon">
+                <img src="{{ url_for('static', filename='images/home.png') }}" alt="home">
+            </a>
+            <div class="bottom-icons">
+                <div class="icon" id="search-icon"><img src="{{ url_for('static', filename='images/search.png') }}" alt="search"></div>
+                <input type="text" id="search-input" placeholder="{{ tr['search_placeholder'] }}" style="display:none;z-index: 10001;">
+                <a href="{{ url_for('create') }}" class="icon"><img src="{{ url_for('static', filename='images/create.png') }}" alt="create"></a>
+                <div class="icon">
+                    <a href="{{ url_for('notifications') }}">
+                        <img src="{{ url_for('static', filename='images/notification.png') }}" alt="notification">
+                    </a>
+                </div>
+                <a href="{{ url_for('profile', userid=session['userid']) }}">
+                    <div class="icon" style="border-radius: 90px !important;"><img src="{{ url_for('static', filename='images/' + session['avatar']) }}" alt="user"></div>
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="user-square">
+        <h3>{{ tr['search_placeholder'] }}</h3>
+        <div id="user-results"></div>
+    </div>
+    <main>
+    <div class="create-post-container">
+        <form action="{{ url_for('create') }}" method="post" enctype="multipart/form-data" class="create-post-box">
+            <div id="step-1" class="form-step active">
+                <h1 class="create-post-title">{{ tr['create_post'] }}</h1>
+                <label for="post-title" class="post-title-label">{{ tr['title'] }}</label>
+                <input type="text" id="post-title" name="title" class="post-title-input">
+                <button type="button" class="next-btn" data-next="step-2">{{ tr['next'] }}</button>
+            </div>
+
+            <div id="step-2" class="form-step">
+                <label for="post-description" class="post-description-label">{{ tr['description'] }}</label>
+                <textarea id="post-description" name="description" class="post-description-input"></textarea>
+                <button type="button" class="next-btn" data-next="step-3">{{ tr['next'] }}</button>
+            </div>
+
+            <div id="step-3" class="form-step">
+                <div class="image-upload-container">
+                    <div class="image-upload-box">
+                        <label for="image-upload-input" class="image-upload-label">{{ tr['upload_image'] }}</label>
+                        <input type="file" id="image-upload-input" name="image" class="image-upload-input" accept="image/*">
+                        <div class="image-drop-area" id="image-drop-area">
+                            <p>{{ tr['drag_drop_image'] }}</p>
+                            <p>{{ tr['or'] }}</p>
+                            <p>{{ tr['click_select_image'] }}</p>
+                        </div>
+                        <div class="image-preview" id="image-preview"></div>
+                    </div>
+                    <button type="submit" id="publish-btn" class="publish-btn" style="display: none;">{{ tr['publish'] }}</button>
+                </div>
+            </div>
+
+            <div id="error-message" class="error-message">{{ tr['image_size_error'] }}</div>
+        </form>
+    </div>
+    </main>
+    <script>
+        $(document).ready(function() {
+            let inactivityTimer;
+            const inactivityTimeout = 10000;
+
+            function resetInputField() {
+                $('#search-input').css('animation', 'slideInputOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).css('display', 'none').dequeue();
+                    $('#search-icon').removeClass('hidden').css('animation', 'slideIconIn 0.5s forwards');
+                });
+            }
+
+            function startInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(resetInputField, inactivityTimeout);
+            }
+
+            $('#search-icon').click(function() {
+                $(this).css('animation', 'slideIconOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).addClass('hidden').dequeue();
+                });
+
+                $('#search-input').css('display', 'block')
+                    .css('animation', 'slideInputIn 0.5s forwards')
+                    .animate({ width: '200px' }, 500);
+
+                startInactivityTimer();
+            });
+
+            $('#search-input').on('input', function() {
+                startInactivityTimer();
+            });
+
+            $('#search-input').keypress(function(e) {
+                if (e.which == 13) {
+                    e.preventDefault();
+                    searchUsers();
+                }
+            });
+            function searchUsers() {
+                const searchQuery = $('#search-input').val().trim().toLowerCase();
+                if (searchQuery.length > 0) {
+                    const easterEggs = ['смысл жизни', 'the meaning of life', 'meaning of life'];
+                    const bagQuestions = ['что в мешочке?', "what's in the bag?"];
+                    const matrixQueries = ['матрица'];
+                    const secretMemes = ['секретный мем'];
+                    const error404 = ['404'];
+                    const pickMe = ['пикми'];
+                    const quitQueries = ['quit', 'выйти'];
+
+                    if (quitQueries.includes(searchQuery)) {
+                        window.location.href = '/logout';
+                    } else if (easterEggs.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Смысл жизни найден! Подождите... Ошибка 404: смысл не найден. Может, попробуешь поискать котиков?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (bagQuestions.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ничего особенного... просто немного мемов и чья-то забытая уверенность в себе.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (matrixQueries.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Красная или синяя таблетка?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (secretMemes.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ты нашел секретный мем! Но он настолько секретный, что мы его забыли.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (error404.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ошибка 404: здоровый сон не найден. Но мы нашли тебе кучу мемов!
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (pickMe.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Если надо себя выделять, чтобы понравиться, может, стоит пересмотреть, кому ты пытаешься понравиться?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/search_users',
+                            data: { search_query: $('#search-input').val() },
+                            success: function(response) {
+                                const userResults = $('#user-results');
+                                userResults.empty();
+                                response.forEach(user => {
+                                    const userId = user.userid || 'defaultId';
+                                    const verifiedIcon = user.is_verified ? `<img src="/static/images/verified.png" alt="Verified" class="verified-icon">` : '';
+
+                                    userResults.append(`
+                                        <div class="user-result">
+                                            <img src="${user.avatar}" alt="${user.nickname}'s avatar" />
+                                            <a href="/profile/${userId}" class="user-nickname">${user.nickname}</a>
+                                            ${verifiedIcon}
+                                            <span>${user.subscriber_count} {{ tr['subscribers'] }}</span>
+                                        </div>
+                                    `);
+                                });
+                                $('.user-square').show();
+
+                                setTimeout(() => {
+                                    $('.user-result').each(function() {
+                                        $(this).addClass('visible');
+                                    });
+                                }, 1000);
+                            }
+                        });
+                        $('main').hide();
+                        $('.sidebar').hide();
+                    }
+                } else {
+                    $('.user-square').hide();
+                    $('main').show();
+                    $('.sidebar').show();
+                }
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

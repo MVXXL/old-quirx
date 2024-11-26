@@ -1,0 +1,252 @@
+'<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quirx | Memes, discussion, explosive laughter!</title>
+     
+    <meta property="og:title" content="Quirx | Memes, discussion, explosive laughter!">
+    <meta property="og:description" content="Join the Quirx community - your new source for the freshest and funniest memes!">
+    <meta property="og:image" content="{{ url_for('static', filename='icons/icon-512x512.png') }}">
+    <meta property="og:url" content="https://quirx.fun">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_US">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Quirx | Memes, discussion, explosive laughter!">
+    <meta name="twitter:description" content="Join Quirx to find the funniest and freshest memes online. Explosive laughter guaranteed!">
+    <meta name="twitter:image" content="{{ url_for('static', filename='icons/icon-512x512.png') }}">
+    <meta name="twitter:site" content="@QuirxOfficial">
+    
+    <meta name="description" content="Quirx is your new source for fresh, funny memes. Join the Quirx community and explore a world of laughter, memes, and meme culture!">
+    <meta name="keywords" content="memes, funny memes, dank memes, meme culture, internet memes, community, Quirx, laughter, humor, meme generator, meme sharing">
+    <meta name="author" content="Quirx Team">
+    <meta name="copyrighted-site-verification" content="7197a7862b76e4d0" />
+    <link rel="canonical" href="https://quirx.fun">
+
+    <meta name="robots" content="index, follow">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Quirx",
+        "url": "https://quirx.fun",
+        "description": "Quirx is the ultimate platform for meme lovers. Explore and share the funniest and freshest memes online.",
+        "inLanguage": "en-US",
+        "image": "https://quirx.fun/static/icons/icon-512x512.png",
+        "sameAs": [
+            "https://www.youtube.com/@Quirxfun",
+            "https://www.tiktok.com/@quirx_fun",
+            "https://t.me/quirxcom"
+        ]
+    }
+    </script>
+
+    <meta name="google-site-verification" content="qmulLh5aj75HTc1gmzneBxN5b0ub_n-f6jow1D9C3p8">
+
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="manifest" href="static/manifest.json">
+
+    <meta property="og:site_name" content="Quirx">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="application-name" content="Quirx">
+    <meta name="apple-mobile-web-app-title" content="Quirx">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='icons/icon-512x512.png') }}">
+    <meta name="msapplication-TileColor" content="#000000">
+    
+    <style>
+        .install-prompt {
+            position: relative;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 20px;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 100%;
+            z-index: 1000;
+            transform: rotate(-2deg); 
+            clip-path: polygon(0 0, 100% 0%, 100% 85%, 50% 100%, 0 85%);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .install-prompt button {
+            background-color: #fff;
+            color: #000;
+            border: 2px solid #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .install-prompt button:hover {
+            background-color: #ddd;
+            color: #000;
+        }
+
+        .install-prompt {
+            animation: slideDown 0.5s ease-in-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%) rotate(-2deg);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) rotate(-2deg);
+                opacity: 1;
+            }
+        }
+        .community-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .avatar-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            margin: 10px;
+        }
+        .avatar-container img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 10px;
+        }
+        .join-text {
+            font-size: 30px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .join-text-next {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 500px;
+            font-size: 18px;
+            margin: 0 auto 10px auto; 
+            margin-bottom: 10px;
+            color: #dddddd;
+            text-align: center; 
+        }
+        .discord-button {
+            background-color: #fff;
+            color: #000;
+            margin: 10px;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.10s ease; 
+        }
+        .discord-button:hover {
+            background-color: #dddddd;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div id="installPrompt" class="install-prompt" style="display: none;">
+        <p>Would you like to download our web app?</p>
+        <button id="installButton">Install Quirx</button>
+    </div>
+    <header>
+        <div class="logo">Quirx</div>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li class="moreeffect"><a href="#">Support</a><span class="soon-text">Soon</span></li>
+                <li><a href="/turbo">Turbo</a></li>
+                <li class="moreeffect"><a href="#">More</a><span class="soon-text">Soon</span></li>
+            </ul>
+        </nav>
+        <button class="open-quirx">Open Quirx</button>
+    </header>
+    <main>
+        <div class="content">
+            <div class="text-content">
+                <h1 class="slogan">Quirx - Memes, discussion, explosive laughter!</h1>
+                <p class="description">Your right choice in the world of memes! Here you can not only laugh heartily, but also blow up the internet by becoming popular! Join us and take your meme game to the next level!</p>
+            </div>
+            <div class="image-content">
+                <img src="static/images/large-image.png" alt="Large Image">
+            </div>
+        </div>
+    </main>
+    <div class="community-section">
+        <div class="join-text">Join the community</div>
+        <div class="join-text-next">Join the Quirx community - your new source for the freshest and funniest memes! Stay up to date with everything that makes you smile!</div>
+        <div class="avatar-container">
+            <img src="static/images/avatar1.png" alt="Avatar 1">
+            <img src="static/images/avatar2.gif" alt="Avatar 2">
+            <img src="static/images/avatar3.gif" alt="Avatar 3">
+            <img src="static/images/avatar4.png" alt="Avatar 4">
+            <img src="static/images/avatar5.png" alt="Avatar 5">
+        </div>
+        <a href="https://discord.gg/vtDGpxaDX7" class="discord-button">Discord</a>
+    </div>
+    <a class="copyrighted-badge" title="Copyrighted.com Registered &amp; Protected" target="_blank" href="https://app.copyrighted.com/website/S4SJ1lXgt3exjw03"><img alt="Copyrighted.com Registered &amp; Protected" border="0" width="125" height="25" srcset="https://static.copyrighted.com/badges/125x25/02_1_2x.png 2x" src="https://static.copyrighted.com/badges/125x25/02_1.png"></a><script src="https://static.copyrighted.com/badges/helper.js"></script>
+    <script>
+        document.querySelector('.open-quirx').addEventListener('click', function() {
+            fetch('/check_session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logged_in) {
+                        window.location.href = '/app';
+                    } else {
+                        window.location.href = '/login';
+                    }
+                });
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope: ', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Service Worker registration failed: ', error);
+                });
+        }
+        let deferredPrompt;
+        const installPromptElement = document.getElementById('installPrompt');
+        const installButton = document.getElementById('installButton');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            installPromptElement.style.display = 'block';
+
+            installButton.addEventListener('click', () => {
+                installPromptElement.style.display = 'none'; 
+                deferredPrompt.prompt();
+
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            installPromptElement.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

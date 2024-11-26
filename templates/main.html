@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quirx</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+    <style>
+        .like-icon, .save-icon {
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            opacity: 1;
+            transition: transform 0.2s, opacity 0.3s;
+        }
+
+        .like-icon.clicked, .save-icon.clicked {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .like-animation-button, .save-animation-button {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .error-message {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: red;
+            color: white;
+            z-index: 1000;
+        }
+        #kofi-button {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 1000; 
+        }
+    </style>
+    <script>
+    $(document).ready(function() {
+        function updateLikeIconState(postId, isLiked) {
+            var $icon = $(`.like-icon[data-post-id='${postId}']`);
+            if (isLiked) {
+                $icon.attr('src', '/static/images/liked.png').addClass('liked');
+            } else {
+                $icon.attr('src', '/static/images/like.png').removeClass('liked');
+            }
+        }
+
+        function updateSaveIconState(postId) {
+            var $icon = $(`.save-icon[data-post-id='${postId}']`);
+            var savedPosts = JSON.parse(localStorage.getItem('savedPosts')) || [];
+            if (savedPosts.includes(postId)) {
+                $icon.attr('src', '/static/images/saved.png').addClass('saved');
+            } else {
+                $icon.attr('src', '/static/images/save.png').removeClass('saved');
+            }
+        }
+
+        function handleClick(iconClass, url, updateStateCallback) {
+            $(iconClass).click(function() {
+                var $icon = $(this);
+                var postId = $icon.data('post-id');
+
+                if (!postId || $icon.hasClass('animating')) return;
+
+                $icon.addClass('animating');
+                $('<button>', { class: `${iconClass.slice(1)}-animation-button` }).appendTo($icon.parent());
+
+                setTimeout(function() {
+                    $icon.addClass('clicked');
+                }, 10);
+
+                setTimeout(function() {
+                    $icon.removeClass('clicked').removeClass('animating').siblings(`.${iconClass.slice(1)}-animation-button`).remove();
+                }, 300);
+
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    contentType: 'application/json',
+                    data: JSON.stringify({ post_id: postId }),
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            updateStateCallback(postId, response.is_liked || response.saved);
+                            $icon.siblings('.like-count').text(response.likes_count);
+                        } else {
+                            console.error('Error:', response.message);
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        alert('AJAX Error: ' + error);
+                    }
+                });
+            });
+        }
+
+        handleClick('.like-icon', '/like_post', updateLikeIconState);
+        handleClick('.save-icon', '/save_post', updateSaveIconState);
+
+        function handleSubscribeUnsubscribe(action, url, buttonClass, newButtonClass, text) {
+            $(buttonClass).click(function() {
+                var $button = $(this);
+                var userId = $button.data('user-id');
+
+                retryRequest({
+                    type: 'POST',
+                    url: url,
+                    contentType: 'application/json',
+                    data: JSON.stringify({ user_id: userId }),
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $button.text(text).removeClass(buttonClass.slice(1)).addClass(newButtonClass.slice(1));
+                            refreshPage();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    }
+                });
+            });
+        }
+
+        handleSubscribeUnsubscribe('.subscribe-btn', '/subscribe', 'subscribe-btn', 'unsubscribe-btn', 'Unsubscribe');
+        handleSubscribeUnsubscribe('.unsubscribe-btn', '/unsubscribe', 'unsubscribe-btn', 'subscribe-btn', 'Subscribe');
+
+        function retryRequest(options, retryCount = 5, delay = 1000) {
+            $.ajax({
+                ...options,
+                error: function(xhr) {
+                    if (xhr.status === 429 && retryCount > 0) {
+                        setTimeout(() => retryRequest(options, retryCount - 1, delay * 2), delay);
+                    } else {
+                        console.error('AJAX Error:', xhr);
+                    }
+                }
+            });
+        }
+
+        function refreshPage() {
+            location.reload(true);
+        }
+
+        $('.like-icon').each(function() {
+            var postId = $(this).data('post-id');
+            if (postId) {
+                retryRequest({
+                    type: 'GET',
+                    url: '/check_like',
+                    data: { post_id: postId },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            updateLikeIconState(postId, response.is_liked);
+                        }
+                    }
+                });
+            }
+        });
+
+        $('.save-icon').each(function() {
+            var postId = $(this).data('post-id');
+            if (postId) {
+                updateSaveIconState(postId);
+            }
+        });
+
+        function applyPostStyles() {
+            $('.posts-container .post-container').each(function(index) {
+                $(this).addClass(index === 0 ? 'first-post' : 'other-post');
+            });
+        }
+
+        applyPostStyles();
+
+        $('#search-icon').click(function() {
+            $(this).css('animation', 'slideIconOut 0.5s forwards').delay(500).queue(function() {
+                $(this).addClass('hidden').dequeue();
+            });
+
+            $('#search-input').css('display', 'block')
+                .css('animation', 'slideInputIn 0.5s forwards')
+                .animate({ width: '200px' }, 500);
+
+            startInactivityTimer();
+        });
+
+        $('#search-input').on('input', startInactivityTimer);
+        $('#search-input').keypress(function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                searchUsers();
+            }
+        });
+
+        function searchUsers() {
+            const searchQuery = $('#search-input').val().trim().toLowerCase();
+            if (searchQuery.length === 0) {
+                $('.user-square').hide();
+                $('main').show();
+                $('.sidebar').show();
+                return;
+            }
+
+            const easterEggs = ['смысл жизни', 'the meaning of life', 'meaning of life'];
+            const bagQuestions = ['что в мешочке?', "what's in the bag?"];
+            const matrixQueries = ['матрица'];
+            const secretMemes = ['секретный мем'];
+            const error404 = ['404'];
+            const pickMe = ['пикми'];
+            const quitQueries = ['quit', 'выйти'];
+
+            if (quitQueries.includes(searchQuery)) {
+                window.location.href = '/logout';
+            } else if (easterEggs.includes(searchQuery)) {
+                showEasterEgg('Смысл жизни найден! Подождите... Ошибка 404: смысл не найден. Может, попробуешь поискать котиков?');
+            } else if (bagQuestions.includes(searchQuery)) {
+                showEasterEgg('Ничего особенного... просто немного мемов и чья-то забытая уверенность в себе.');
+            } else if (matrixQueries.includes(searchQuery)) {
+                showEasterEgg('Красная или синяя таблетка?');
+            } else if (secretMemes.includes(searchQuery)) {
+                showEasterEgg('Ты нашел секретный мем! Но он настолько секретный, что мы его забыли.');
+            } else if (error404.includes(searchQuery)) {
+                showEasterEgg('Ошибка 404: здоровый сон не найден. Но мы нашли тебе кучу мемов!');
+            } else if (pickMe.includes(searchQuery)) {
+                showEasterEgg('Если надо себя выделять, чтобы понравиться, может, стоит пересмотреть, кому ты пытаешься понравиться?');
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: '/search_users',
+                    data: { search_query: searchQuery },
+                    success: function(response) {
+                        const userResults = $('#user-results');
+                        userResults.empty();
+                        response.forEach(user => {
+                            const userId = user.userid || 'defaultId';
+                            const verifiedIcon = user.is_verified ? `<img src="/static/images/verified.png" alt="Verified" class="verified-icon">` : '';
+
+                            userResults.append(`
+                                <div class="user-result">
+                                    <img src="${user.avatar}" alt="${user.nickname}'s avatar" />
+                                    <a href="/profile/${userId}" class="user-nickname">${user.nickname}</a>
+                                    ${verifiedIcon}
+                                    <span>${user.subscriber_count} {{ tr['subscribers'] }}</span>
+                                </div>
+                            `);
+                        });
+                        $('.user-square').show();
+
+                        setTimeout(() => {
+                            $('.user-result').addClass('visible');
+                        }, 1000);
+                    }
+                });
+                $('main').hide();
+                $('.sidebar').hide();
+            }
+        }
+
+        function showEasterEgg(message) {
+            $('#user-results').html(`
+                <div class="easter-egg-message">
+                    ${message}
+                </div>
+            `);
+            $('main').hide();
+            $('.sidebar').hide();
+            $('.user-square').show();
+        }
+
+        function updateFlag(language) {
+            var flagSrc = '/static/images/' + language + '-flag.png';
+            $('.language-select-container img').attr('src', flagSrc);
+        }
+
+        $('.language-select-container').click(function() {
+            $('.language-select-menu').toggleClass('active');
+        });
+
+        $('.language-option').click(function() {
+            var selectedLanguage = $(this).data('language');
+            $.ajax({
+                url: '/set_language/' + selectedLanguage,
+                type: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert("Error changing language: " + response.message);
+                    }
+                },
+                error: function() {
+                    alert("Error changing language.");
+                }
+            });
+        });
+
+        function startInactivityTimer() {
+            clearTimeout(window.inactivityTimer);
+            window.inactivityTimer = setTimeout(function() {
+                $('#search-icon').removeClass('hidden').css('animation', 'slideIconIn 0.5s forwards');
+                $('#search-input').hide().css('animation', '');
+            }, 5000);
+        }
+    });
+    </script>
+</head>
+<body>
+    <header>
+        <div class="icon-container">
+            <a href="/app" class="icon">
+                <img src="{{ url_for('static', filename='images/home.png') }}" alt="home">
+            </a>
+            <div class="bottom-icons">
+                <div class="icon" id="search-icon"><img src="{{ url_for('static', filename='images/search.png') }}" alt="search"></div>
+                <input type="text" id="search-input" placeholder="{{ tr['search_placeholder'] }}" style="display:none;z-index: 10001;">
+                <a href="{{ url_for('create') }}" class="icon"><img src="{{ url_for('static', filename='images/create.png') }}" alt="create"></a>
+                <div class="icon">
+                    <a href="{{ url_for('notifications') }}">
+                        <img src="{{ url_for('static', filename='images/notification.png') }}" alt="notification">
+                    </a>
+                </div>
+                <a href="{{ url_for('profile', userid=session['userid']) }}">
+                    <div class="icon" style="border-radius: 90px !important;"><img src="{{ url_for('static', filename='images/' + session['avatar']) }}" alt="user"></div>
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="language-select-container">
+        <img src="/static/images/{{ g.language }}-flag.png" alt="Language Flag">
+    </div>
+    <div class="language-select-menu" style="display: none;">
+        <div class="language-option" data-language="ar">
+            <img src="{{ url_for('static', filename='images/ar-flag.png') }}" alt="Arabic">
+        </div>
+        <div class="language-option" data-language="au">
+            <img src="{{ url_for('static', filename='images/au-flag.png') }}" alt="Australian English">
+        </div>
+        <div class="language-option" data-language="be">
+            <img src="{{ url_for('static', filename='images/be-flag.png') }}" alt="Belarusian">
+        </div>
+        <div class="language-option" data-language="bg">
+            <img src="{{ url_for('static', filename='images/bg-flag.png') }}" alt="Bulgarian">
+        </div>
+        <div class="language-option" data-language="cs">
+            <img src="{{ url_for('static', filename='images/cs-flag.png') }}" alt="Czech">
+        </div>
+        <div class="language-option" data-language="da">
+            <img src="{{ url_for('static', filename='images/da-flag.png') }}" alt="Danish">
+        </div>
+        <div class="language-option" data-language="de">
+            <img src="{{ url_for('static', filename='images/de-flag.png') }}" alt="German">
+        </div>
+        <div class="language-option" data-language="de-CH">
+            <img src="{{ url_for('static', filename='images/de-CH-flag.png') }}" alt="Swiss German">
+        </div>
+        <div class="language-option" data-language="en">
+            <img src="{{ url_for('static', filename='images/en-flag.png') }}" alt="English">
+        </div>
+        <div class="language-option" data-language="en-GB">
+            <img src="{{ url_for('static', filename='images/en-GB-flag.png') }}" alt="British English">
+        </div>
+        <div class="language-option" data-language="es">
+            <img src="{{ url_for('static', filename='images/es-flag.png') }}" alt="Spanish">
+        </div>
+        <div class="language-option" data-language="fr">
+            <img src="{{ url_for('static', filename='images/fr-flag.png') }}" alt="French">
+        </div>
+        <div class="language-option" data-language="he">
+            <img src="{{ url_for('static', filename='images/he-flag.png') }}" alt="Hebrew">
+        </div>
+        <div class="language-option" data-language="hi">
+            <img src="{{ url_for('static', filename='images/hi-flag.png') }}" alt="Hindi">
+        </div>
+        <div class="language-option" data-language="it">
+            <img src="{{ url_for('static', filename='images/it-flag.png') }}" alt="Italian">
+        </div>
+        <div class="language-option" data-language="ja">
+            <img src="{{ url_for('static', filename='images/ja-flag.png') }}" alt="Japanese">
+        </div>
+        <div class="language-option" data-language="kk">
+            <img src="{{ url_for('static', filename='images/kk-flag.png') }}" alt="Kazakh">
+        </div>
+        <div class="language-option" data-language="ko">
+            <img src="{{ url_for('static', filename='images/ko-flag.png') }}" alt="Korean">
+        </div>
+        <div class="language-option" data-language="kp">
+            <img src="{{ url_for('static', filename='images/kp-flag.png') }}" alt="North Korean">
+        </div>
+        <div class="language-option" data-language="ky">
+            <img src="{{ url_for('static', filename='images/ky-flag.png') }}" alt="Kyrgyz">
+        </div>
+        <div class="language-option" data-language="lt">
+            <img src="{{ url_for('static', filename='images/lt-flag.png') }}" alt="Lithuanian">
+        </div>
+        <div class="language-option" data-language="mk">
+            <img src="{{ url_for('static', filename='images/mk-flag.png') }}" alt="Macedonian">
+        </div>
+        <div class="language-option" data-language="nl">
+            <img src="{{ url_for('static', filename='images/nl-flag.png') }}" alt="Dutch">
+        </div>
+        <div class="language-option" data-language="no">
+            <img src="{{ url_for('static', filename='images/no-flag.png') }}" alt="Norwegian">
+        </div>
+        <div class="language-option" data-language="pl">
+            <img src="{{ url_for('static', filename='images/pl-flag.png') }}" alt="Polish">
+        </div>
+        <div class="language-option" data-language="pt">
+            <img src="{{ url_for('static', filename='images/pt-flag.png') }}" alt="Portuguese">
+        </div>
+        <div class="language-option" data-language="ro">
+            <img src="{{ url_for('static', filename='images/ro-flag.png') }}" alt="Romanian">
+        </div>
+        <div class="language-option" data-language="ua">
+            <img src="{{ url_for('static', filename='images/ua-flag.png') }}" alt="Ukrainian">
+        </div>
+        <div class="language-option" data-language="sk">
+            <img src="{{ url_for('static', filename='images/sk-flag.png') }}" alt="Slovak">
+        </div>
+        <div class="language-option" data-language="sv">
+            <img src="{{ url_for('static', filename='images/sv-flag.png') }}" alt="Swedish">
+        </div>
+        <div class="language-option" data-language="tg">
+            <img src="{{ url_for('static', filename='images/tg-flag.png') }}" alt="Tajik">
+        </div>
+        <div class="language-option" data-language="tl">
+            <img src="{{ url_for('static', filename='images/tl-flag.png') }}" alt="Filipino">
+        </div>
+        <div class="language-option" data-language="tr">
+            <img src="{{ url_for('static', filename='images/tr-flag.png') }}" alt="Turkish">
+        </div>
+        <div class="language-option" data-language="ru">
+            <img src="{{ url_for('static', filename='images/ru-flag.png') }}" alt="Russian">
+        </div>
+        <div class="language-option" data-language="zh">
+            <img src="{{ url_for('static', filename='images/zh-flag.png') }}" alt="Chinese">
+        </div>
+        <div class="language-option" data-language="zh-TW">
+            <img src="{{ url_for('static', filename='images/zh-TW-flag.png') }}" alt="Taiwanese Chinese">
+        </div>
+    </div>
+    <div class="user-square">
+        <h3>{{ tr['search_placeholder'] }}</h3>
+        <div id="user-results"></div>
+    </div>
+    <main>
+        <div class="posts-container">
+            {% if posts %}
+                {% for post in posts %}
+                    <div class="post-container" data-post-id="{{ post.postid }}">
+                        <div class="post-header">
+                            <div class="user-avatar">
+                                <img src="{{ url_for('static', filename='images/' + post.user.avatar) }}" alt="User Avatar">
+                            </div>
+                            <a href="{{ url_for('profile', userid=post.user.userid) }}" class="user-nickname"><strong>{{ post.user.nickname }}</strong></a>
+                            {% if post.user.is_verified %}
+                                <img src="{{ url_for('static', filename='images/verified.png') }}" alt="Verified" class="verified-icon">
+                            {% endif %}
+                            {% if post.is_self %}
+                                <button class="subscribe-btn" data-user-id="{{ post.user.userid }}" disabled>{{ tr['you'] }}</button>
+                            {% else %}
+                                {% if post.is_subscribed %}
+                                    <button class="unsubscribe-btn" data-user-id="{{ post.user.userid }}">{{ tr['unsubscribe'] }}</button>
+                                {% else %}
+                                    <button class="subscribe-btn" data-user-id="{{ post.user.userid }}">{{ tr['subscribe'] }}</button>
+                                {% endif %}
+                            {% endif %}
+                            {% if user.is_admin %}
+                                <form method="POST" action="{{ url_for('delete_post', postid=post.postid) }}" style="display:inline;">
+                                    <button type="submit" class="btn">Delete</button>
+                                </form>
+                            {% endif %}
+                            <img src="{{ url_for('static', filename='images/more.png') }}" alt="More" class="more-icon">
+                            <div class="share-button" style="display:none;">{{ tr['share'] }}</div>
+                            {% if post.user_id == current_user.id %}
+                                <form action="{{ url_for('deleted_post', post_id=post.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="share-button">Удалить</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        <img src="{{ url_for('static', filename='uploads/' + post.image) }}" alt="Post Image" class="post-image">
+                        <div class="icons">
+                            <div class="icon-left">
+                                <img class="like-icon" src="{{ url_for('static', filename='images/like.png') }}" data-post-id="{{ post.postid }}">
+                                <span class="like-count">{{ post.likes_count }}</span>
+                                <img class="comment-icon" src="{{ url_for('static', filename='images/comments.png') }}" alt="comments">
+                            </div>
+                            <div class="icon-right">
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>{{ tr['no_posts'] }}</p>
+            {% endif %}
+        </div>
+        <div class="popular-users-container">
+            <h3>{{ tr['popular_users'] }}</h3>
+            {% for user in popular_users %}
+                <div class="popular-user">
+                    <img src="{{ url_for('static', filename='images/' + user.avatar) }}" alt="User Avatar">
+                    <div>
+                        <a href="{{ url_for('profile', userid=user.userid) }}" class="popular-user-name">{{ user.nickname }}</a>
+                        {% if user.is_verified %}
+                            <img src="{{ url_for('static', filename='images/verified.png') }}" alt="Verified" class="verified-icon">
+                        {% endif %}
+                        <span class="popular-user-subscriber-count">{{ user.subscriber_count }} {{ tr['subscribers'] }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+    <div class="sidebar">
+        <div class="comment-section">
+            {% if post_id in comments_data %}
+                {% for comment in comments_data[post_id] %}
+                    <div class="comment">
+                        <img src="{{ url_for('static', filename='images/' + comment.user_avatar) }}" alt="user" id="avatar-image">
+                        <div class="comment-content">
+                            <strong>{{ comment.user_nickname }}</strong>
+                            {% if comment.is_verified %}
+                                <img src="{{ url_for('static', filename='images/verified.png') }}" alt="Verified" class="verified-icon">
+                            {% endif %}
+                            <p>{{ comment.content }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>...</p>
+            {% endif %}
+        </div>
+        <div class="add-comment">
+            <input type="text" class="input-field" placeholder="{{ tr['write_comment'] }}">
+        </div>
+    </div>
+    <div id="kofi-button" style="position: fixed; bottom: 10px; right: 10px; z-index: 1000;">
+        <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
+        <script type='text/javascript'>
+            kofiwidget2.init('Support Me on Ko-fi', '#383838', 'E1E6130QBA');
+            kofiwidget2.draw();
+        </script>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let touchStartX = 0;
+            let touchEndX = 0;
+            const swipeThreshold = 50; 
+            const postsContainer = document.querySelector('.posts-container');
+            const popularPeople = document.querySelector('.popular-people');
+
+            function handleSwipe() {
+                if (touchEndX < touchStartX - swipeThreshold) {
+                    popularPeople.style.display = 'none';
+                    postsContainer.style.transform = 'translateX(0)';
+                }
+                if (touchEndX > touchStartX + swipeThreshold) {
+                    popularPeople.style.display = 'block';
+                    postsContainer.style.transform = 'translateX(-100%)';
+                }
+            }
+
+            document.addEventListener('touchstart', function(event) {
+                touchStartX = event.changedTouches[0].screenX;
+            });
+
+            document.addEventListener('touchend', function(event) {
+                touchEndX = event.changedTouches[0].screenX;
+                handleSwipe();
+            });
+        });
+    </script>
+</body>
+</html>

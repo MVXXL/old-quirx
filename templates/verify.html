@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quirx | Verify Phone</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+    <script>
+        let attempts = 0;
+        let intervalId = null;
+
+        function resendCode() {
+            if (attempts >= 3) {
+                window.location.href = "{{ url_for('login') }}";
+                return;
+            }
+
+            document.getElementById('resend-btn').disabled = true;
+            intervalId = setInterval(() => {
+                document.getElementById('resend-btn').innerText = `Resend in ${60 - attempts * 60}s`;
+                attempts++;
+                if (attempts >= 3) {
+                    clearInterval(intervalId);
+                    document.getElementById('resend-btn').innerText = "Support";
+                }
+            }, 60000);
+            
+            fetch("{{ url_for('resend_verification_code') }}", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to resend verification code');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log('Verification code resent successfully');
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error resending verification code:', error);
+                clearInterval(intervalId);
+                document.getElementById('resend-btn').innerText = "Support";
+                attempts = 3; 
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="login-box" id="login-box" style="min-height: 100px !important;">
+            <h1>Verify your phone</h1>
+            <form id="verify-form" method="post" action="{{ url_for('verify_phone') }}">
+                <input type="text" name="verification_code" placeholder="Enter verification code">
+                <div class="actions">
+                    <button type="submit">Verify</button>
+                    <button type="button" id="resend-btn" onclick="resendCode()">Resend</button>
+                </div>
+            </form>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>

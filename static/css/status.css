@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f8f8f8;
+}
+
+h1 {
+    color: #333;
+}
+
+.status-page {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 1000px;
+    margin: 20px auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    font-family: 'Lilita One', cursive;
+    font-size: 36px;
+}
+
+.status-indicator {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.status-indicator span {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 25px;
+    color: #fff;
+}
+
+.status-indicator .green {
+    background-color: #28a745;
+}
+
+.status-indicator .orange {
+    background-color: #ff9800;
+}
+
+.status-indicator .red {
+    background-color: #dc3545;
+}
+
+.table-container {
+    margin-top: 20px;
+}
+
+.table-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.status-bar {
+    display: flex;
+    align-items: center;
+}
+
+.status-bar .bar {
+    flex-grow: 1;
+    height: 20px;
+    margin: 0 5px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.status-bar .bar.up {
+    background-color: #28a745;
+}
+
+.status-bar .bar.down {
+    background-color: #dc3545;
+}
+
+.status-bar .bar.warning {
+    background-color: #ff9800;
+}
+
+.status-bar .bar:hover::after {
+    content: attr(data-time);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #777;
+}

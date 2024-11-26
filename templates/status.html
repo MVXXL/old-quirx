@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 12px;
+            position: relative;
+        }
+        .header {
+            background-color: #000000;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-family: 'Lilita One', cursive;
+            font-size: 48px;
+            margin: 0;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: -25px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .status-indicator {
+            margin-top: 160px;
+            padding: 20px;
+        }
+        .status-bar-container {
+            margin-bottom: 32px;
+        }
+        .service-name {
+            font-weight: bold;
+            margin-bottom: 16px;
+            display: block;
+            font-size: 24px;
+            color: #000;
+        }
+
+        .status-bars, .ping-bars {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .status-bar, .ping-bar {
+            width: 15px;
+            height: 60px;
+            margin-right: 10px;
+            border-radius: 6px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.5s ease-in-out;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .status-bar[data-time]:hover::after, .ping-bar[data-time]:hover::after {
+            content: attr(data-time);
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #000000;
+            color: #ffffff;
+            padding: 8px 14px;
+            border-radius: 2px;
+            font-size: 18px;
+            white-space: nowrap;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .green { background-color: #4caf50; }
+        .orange { background-color: #ff9800; }
+        .red { background-color: #f44336; }
+        .gray { background-color: #757575; }
+        .blue { background-color: #2196f3; }
+
+        .details {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #ffffff;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+        }
+        .details p {
+            margin: 0;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .details a {
+            color: #ffffff;
+            text-decoration: underline;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button {
+            align-self: flex-end;
+            cursor: pointer;
+            top: 15px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Quirx Status</div>
+    <div class="status-indicator">
+        <div class="container">
+            <div class="status-bar-container">
+                <span class="service-name">Ping Analytics</span>
+                <div class="ping-bars" id="ping-bars"></div>
+            </div>
+            <div class="status-bar-container">
+                <span class="service-name">Database Connection</span>
+                <div class="status-bars" id="db-status-bars"></div>
+            </div>
+            <div class="status-bar-container">
+                <span class="service-name">Twilio Service 1</span>
+                <div class="status-bars" id="twilio-1-status-bars"></div>
+            </div>
+            <div class="status-bar-container">
+                <span class="service-name">Twilio Service 2</span>
+                <div class="status-bars" id="twilio-2-status-bars"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="details" id="details">
+        <p>Click <a href="/">here</a> to go back to the top of the page. <span class="close-button" onclick="closeDetails()">X</span></p>
+        <p>Subscribe to our updates via <a href="#" onclick="closeDetails()">email</a> or <a href="#" onclick="closeDetails()">SMS</a>.</p>
+    </div>
+
+    <script>
+        function updateStatusBars(statuses, elementId) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            const totalDays = statuses.length;
+
+            for (let i = 0; i < totalDays; i++) {
+                const bar = document.createElement('div');
+                bar.classList.add('status-bar');
+
+                const status = statuses[i];
+                if (status.includes('operational')) {
+                    bar.classList.add('green');
+                } else if (status.includes('error')) {
+                    bar.classList.add('red');
+                } else {
+                    bar.classList.add('gray');
+                }
+                bar.setAttribute('data-time', `${totalDays - i} days ago`);
+
+                container.appendChild(bar);
+            }
+        }
+
+        function updatePingBars(pingData, elementId) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            pingData.reverse().forEach(ping => {
+                const bar = document.createElement('div');
+                bar.classList.add('ping-bar', 'blue');
+                bar.setAttribute('data-time', `Response Time: ${ping.response_time} ms at ${new Date(ping.timestamp).toLocaleString()}`);
+                container.appendChild(bar);
+            });
+        }
+
+        async function fetchAndUpdateStatuses() {
+            try {
+                const response = await fetch('/api/status');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch status data');
+                }
+                const data = await response.json();
+
+                updateStatusBars(data.db_status, 'db-status-bars');
+                updateStatusBars(data.twilio_status_1, 'twilio-1-status-bars');
+                updateStatusBars(data.twilio_status_2, 'twilio-2-status-bars');
+
+                const pingResponse = await fetch('/api/ping');
+                if (!pingResponse.ok) {
+                    throw new Error('Failed to fetch ping data');
+                }
+                const pingData = await pingResponse.json();
+
+                updatePingBars(pingData, 'ping-bars');
+
+                console.log('Updated at: ' + new Date());
+            } catch (error) {
+                console.error('Error fetching data:', error.message);
+            }
+        }
+
+        function closeDetails() {
+            const details = document.getElementById('details');
+            details.style.display = 'none';
+        }
+
+        setInterval(fetchAndUpdateStatuses, 60000);
+
+        fetchAndUpdateStatuses();
+    </script>
+</body>
+</html>

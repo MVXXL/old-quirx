@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+    <script>
+        $(document).ready(function() {
+            let inactivityTimer;
+            const inactivityTimeout = 10000;
+
+            function resetInputField() {
+                $('#search-input').css('animation', 'slideInputOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).css('display', 'none').dequeue();
+                    $('#search-icon').removeClass('hidden').css('animation', 'slideIconIn 0.5s forwards');
+                });
+            }
+
+            function startInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(resetInputField, inactivityTimeout);
+            }
+
+            $('#search-icon').click(function() {
+                $(this).css('animation', 'slideIconOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).addClass('hidden').dequeue();
+                });
+
+                $('#search-input').css('display', 'block')
+                    .css('animation', 'slideInputIn 0.5s forwards')
+                    .animate({ width: '200px' }, 500);
+
+                startInactivityTimer();
+            });
+
+            $('#search-input').on('input', function() {
+                startInactivityTimer();
+            });
+
+            $('#search-input').keypress(function(e) {
+                if (e.which == 13) {
+                    e.preventDefault();
+                    searchUsers();
+                }
+            });
+            function searchUsers() {
+                const searchQuery = $('#search-input').val().trim().toLowerCase();
+                if (searchQuery.length > 0) {
+                    const easterEggs = ['смысл жизни', 'the meaning of life', 'meaning of life'];
+                    const bagQuestions = ['что в мешочке?', "what's in the bag?"];
+                    const matrixQueries = ['матрица'];
+                    const secretMemes = ['секретный мем'];
+                    const error404 = ['404'];
+                    const pickMe = ['пикми'];
+                    const quitQueries = ['quit', 'выйти'];
+
+                    if (quitQueries.includes(searchQuery)) {
+                        window.location.href = '/logout';
+                    } else if (easterEggs.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Смысл жизни найден! Подождите... Ошибка 404: смысл не найден. Может, попробуешь поискать котиков?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (bagQuestions.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ничего особенного... просто немного мемов и чья-то забытая уверенность в себе.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (matrixQueries.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Красная или синяя таблетка?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (secretMemes.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ты нашел секретный мем! Но он настолько секретный, что мы его забыли.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (error404.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ошибка 404: здоровый сон не найден. Но мы нашли тебе кучу мемов!
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (pickMe.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Если надо себя выделять, чтобы понравиться, может, стоит пересмотреть, кому ты пытаешься понравиться?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/search_users',
+                            data: { search_query: $('#search-input').val() },
+                            success: function(response) {
+                                const userResults = $('#user-results');
+                                userResults.empty();
+                                response.forEach(user => {
+                                    const userId = user.userid || 'defaultId';
+                                    const verifiedIcon = user.is_verified ? `<img src="/static/images/verified.png" alt="Verified" class="verified-icon">` : '';
+
+                                    userResults.append(`
+                                        <div class="user-result">
+                                            <img src="${user.avatar}" alt="${user.nickname}'s avatar" />
+                                            <a href="/profile/${userId}" class="user-nickname">${user.nickname}</a>
+                                            ${verifiedIcon}
+                                            <span>${user.subscriber_count} {{ tr['subscribers'] }}</span>
+                                        </div>
+                                    `);
+                                });
+                                $('.user-square').show();
+
+                                setTimeout(() => {
+                                    $('.user-result').each(function() {
+                                        $(this).addClass('visible');
+                                    });
+                                }, 1000);
+                            }
+                        });
+                        $('main').hide();
+                        $('.sidebar').hide();
+                    }
+                } else {
+                    $('.user-square').hide();
+                    $('main').show();
+                    $('.sidebar').show();
+                }
+            }
+        });
+    </script>
+    <style>
+        body {
+            background-color: #0F0F0F;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Changed from center to flex-start */
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow-y: auto; /* Allow vertical scrolling */
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0F0F0F;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 20px;
+            border: 3px solid #0F0F0F;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        header {
+            background-color: rgba(34, 34, 34, 0.5);
+            border-radius: 30px;
+            padding: 25px 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: fixed;
+            top: 50px;
+            left: 30px;
+            height: 90%;
+            width: 90px; 
+            box-sizing: border-box;
+            justify-content: space-between; 
+        }
+
+        .icon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: space-between; 
+        }
+
+        .top-icon, .bottom-icons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 20px; 
+            transition: transform 0.3s; 
+        }
+
+        .icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+            image-rendering: auto; 
+        }
+
+        .icon:hover {
+            transform: scale(1.125); 
+        }
+
+        .icon:last-child {
+            margin-bottom: 0;
+        }
+
+        a.icon {
+            display: inline-flex;
+        }
+
+        main {
+            margin-left: 140px;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid #2a2a2a;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 50px;
+            margin-bottom: 20px;
+            font-size: 1.75em;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        th, td {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 1px solid #2e2e2e;
+        }
+
+        th {
+            background-color: #2e2e2e;
+            color: #e0e0e0;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        td {
+            background-color: #1f1f1f;
+        }
+
+        tr:hover td {
+            background-color: #2a2a2a;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background-color: #FF3B3F;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(255, 59, 63, 0.5);
+        }
+
+        .btn:hover {
+            background-color: #FF1C1F;
+            box-shadow: 0 0 15px rgba(255, 28, 31, 0.7);
+        }
+
+        form {
+            display: inline;
+        }
+
+        .verify-btn {
+            background-color: #fff;
+            color: #000;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .verify-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .verified {
+            color: #00FF00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="icon-container">
+            <a href="/app" class="icon">
+                <img src="{{ url_for('static', filename='images/home.png') }}" alt="home">
+            </a>
+            <div class="bottom-icons">
+                <div class="icon" id="search-icon"><img src="{{ url_for('static', filename='images/search.png') }}" alt="search"></div>
+                <input type="text" id="search-input" placeholder="{{ tr['search_placeholder'] }}" style="display:none;z-index: 10001;">
+                <a href="{{ url_for('create') }}" class="icon"><img src="{{ url_for('static', filename='images/create.png') }}" alt="create"></a>
+                <div class="icon">
+                    <a href="{{ url_for('notifications') }}">
+                        <img src="{{ url_for('static', filename='images/notification.png') }}" alt="notification">
+                    </a>
+                </div>
+                <a href="{{ url_for('profile', userid=session['userid']) }}">
+                    <div class="icon" style="border-radius: 90px !important;"><img src="{{ url_for('static', filename='images/' + session['avatar']) }}" alt="user"></div>
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="user-square">
+        <h3>{{ tr['search_placeholder'] }}</h3>
+        <div id="user-results"></div>
+    </div>
+    <main>
+        <h1>Admin Dashboard</h1>
+        
+        <h2>Users</h2>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>UserID</th>
+                <th>Nickname</th>
+                <th>Actions</th>
+            </tr>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.userid }}</td>
+                <td>{{ user.nickname }}</td>
+                <td>
+                    {% if not user.is_verified %}
+                    <form method="POST" action="{{ url_for('verify_user', userid=user.userid) }}" style="display:inline;">
+                        <button type="submit" class="verify-btn">Verify</button>
+                    </form>
+                    {% else %}
+                    <span class="verified">Verified</span>
+                    {% endif %}
+                    
+                    {% if not user.is_banned %}
+                    <form method="POST" action="{{ url_for('ban_user', userid=user.userid) }}" style="display:inline;">
+                        <button type="submit" class="btn">Ban</button>
+                    </form>
+                    {% else %}
+                    <span class="banned">Banned</span>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('delete_user', userid=user.userid) }}" style="display:inline;">
+                        <button type="submit" class="btn">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+
+        <h2>Comments</h2>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Content</th>
+                <th>Actions</th>
+            </tr>
+            {% for comment in comments %}
+            <tr>
+                <td>{{ comment.id }}</td>
+                <td>{{ comment.content }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" style="display:inline;">
+                        <button type="submit" class="btn">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </main>
+</body>
+</html>

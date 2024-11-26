@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quirx | Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel="icon" href="static/icons/icon-512x512.png" type="image/png">
+    <script src="https://www.google.com/recaptcha/api.js?render=6Lf2HEEqAAAAAOt64PXlCxjgGMaR3OkwMckumHW1" async defer></script>
+</head>
+<body>
+    <div class="container">
+        {% if 'userid' not in session %}
+            <div class="login-box" id="login-box">
+                <h1>Join us!</h1>
+                <p>Welcome! Let's get started!</p>
+                <form id="register-form" method="post" action="{{ url_for('register') }}">
+                    <input type="text" name="nickname" placeholder="Nickname" required>
+                    <input type="password" name="password" placeholder="Password" required>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms-checkbox" name="terms" required>
+                        <label for="terms-checkbox">
+                            I agree to the <a href="{{ url_for('terms') }}" target="_blank">Terms of Service</a> and <a href="{{ url_for('privacy_policy') }}" target="_blank">Privacy Policy</a>.
+                        </label>
+                    </div>
+                    
+                    <div class="actions">
+                        <button type="button" onclick="onSubmit()">Next</button>
+                    </div>
+                </form>
+                <p class="register" id="register">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            </div>
+        {% else %}
+            <p>You are already registered and logged in.</p>
+            {% if session['avatar'] %}
+                <div class="avatar-container">
+                    <p>Here is your assigned avatar:</p>
+                    <img src="{{ url_for('static', filename='images/' ~ session['avatar']) }}" alt="User Avatar">
+                </div>
+            {% endif %}
+        {% endif %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages if category == 'register_error' %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    </div>
+    <script>
+      function onSubmit() {
+          grecaptcha.ready(function() {
+            grecaptcha.execute('6Lf2HEEqAAAAAOt64PXlCxjgGMaR3OkwMckumHW1', { action: 'register' })
+              .then(function(token) {
+                var form = document.getElementById('register-form');
+                var recaptchaInput = document.createElement('input');
+                recaptchaInput.setAttribute('type', 'hidden');
+                recaptchaInput.setAttribute('name', 'g-recaptcha-response');
+                recaptchaInput.setAttribute('value', token);
+                form.appendChild(recaptchaInput);
+                form.submit();
+              })
+              .catch(function(error) {
+                console.error('Error executing reCAPTCHA:', error);
+                alert('Error occurred while verifying reCAPTCHA.');
+              });
+          });
+          return false; 
+        }
+    </script>
+</body>
+</html>

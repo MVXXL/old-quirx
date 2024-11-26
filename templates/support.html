@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/support.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+</head>
+<body>
+    <div class="container">
+        <h1>Support System</h1>
+        <textarea id="report" placeholder="Enter your report here..."></textarea>
+        <button id="submitBtn">Submit Report</button>
+        <div id="response"></div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

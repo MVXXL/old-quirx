@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quirx | Notifications</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-512x512.png') }}" type="image/png">
+    <style>
+        #verification-popup {
+            display: none; /
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .popup-content {
+            background-color: white;
+            padding: 40px;
+            width: 500px;
+            text-align: center;
+            border-radius: 10px;
+            color: black; 
+        }
+
+        .btn.confirm-btn {
+            background-color: black;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn.confirm-btn:hover {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="icon-container">
+            <a href="/app" class="icon">
+                <img src="{{ url_for('static', filename='images/home.png') }}" alt="home">
+            </a>
+            <div class="bottom-icons">
+                <div class="icon" id="search-icon"><img src="{{ url_for('static', filename='images/search.png') }}" alt="search"></div>
+                <input type="text" id="search-input" placeholder="{{ tr['search_placeholder'] }}" style="display:none;z-index: 10001;">
+                <a href="{{ url_for('create') }}" class="icon"><img src="{{ url_for('static', filename='images/create.png') }}" alt="create"></a>
+                <div class="icon">
+                    <a href="{{ url_for('notifications') }}">
+                        <img src="{{ url_for('static', filename='images/notification.png') }}" alt="notification">
+                    </a>
+                </div>
+                <a href="{{ url_for('profile', userid=session['userid']) }}">
+                    <div class="icon" style="border-radius: 90px !important;"><img src="{{ url_for('static', filename='images/' + session['avatar']) }}" alt="user"></div>
+                </a>
+            </div>
+        </div>
+    </header>
+    <div class="user-square">
+        <h3>{{ tr['search_placeholder'] }}</h3>
+        <div id="user-results"></div>
+    </div>
+    <main class="notifications-container">
+        <h1>{{ tr['notifications'] }}</h1>
+        <ul>
+            {% for notification in notifications %}
+            <li>
+                <div class="notification-item">
+                    <img src="{{ url_for('static', filename='images/' + notification.subscriber.avatar) }}" alt="{{ notification.subscriber.nickname }}" class="avatar">
+                    <div class="notification-text">
+                        <strong>{{ notification.subscriber.nickname }}</strong> {{ tr['starts_to_follow_you'] }} 
+                        <span>{{ notification.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        {% if user.is_verified and not user.verified_date %}
+        <li id="verification-notification" style="background-color: white; color: black;">
+            <div style="display: flex; justify-content: space-between;">
+                <p>{{ tr['did_you_receive_official_communication'] }}</p>
+                <button class="verify-btn" style="background-color: black; color: white;" onclick="showPopup()">{{ tr['read'] }}</button>
+            </div>
+        </li>
+        {% elif user.is_verified and user.verified_date %}
+        <li id="verified-notification" style="background-color: rgba(34, 34, 34, 0.8); color: #fff;">
+            <div class="notification-item">
+                <p>{{ tr['you_got_a_tick'] }}<br></p>
+            </div>
+        </li>
+        {% endif %}
+        </ul>
+        
+        <div id="verification-popup">
+            <div class="popup-content">
+                <h2>{{ tr['congratulations'] }}</h2>
+                <p>{{ tr['verification_message_1'] }}</p>
+                <p>{{ tr['verification_message_2'] }}</p>
+                <form method="POST" action="{{ url_for('confirm_verification') }}" onsubmit="confirmAndUpdate()">
+                    <button type="submit" class="btn confirm-btn">{{ tr['confirm'] }}</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function showPopup() {
+            document.getElementById('verification-popup').style.display = 'flex';
+        }
+
+        function confirmAndUpdate() {
+            document.getElementById('verification-popup').style.display = 'none';
+            document.getElementById('verification-notification').style.display = 'none';
+
+            const verifiedNotification = document.createElement('li');
+            verifiedNotification.innerHTML = `
+                <div class="notification-item">
+                    <p>{{ tr['you_got_a_tick'] }}</p>
+                    <span>${new Date().toISOString().split('T')[0]} ${new Date().toLocaleTimeString()}</span>
+                </div>`;
+            document.querySelector('.notifications-container ul').appendChild(verifiedNotification);
+        }
+    </script>
+    <script>
+        $(document).ready(function() {
+            let inactivityTimer;
+            const inactivityTimeout = 10000;
+
+            function resetInputField() {
+                $('#search-input').css('animation', 'slideInputOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).css('display', 'none').dequeue();
+                    $('#search-icon').removeClass('hidden').css('animation', 'slideIconIn 0.5s forwards');
+                });
+            }
+
+            function startInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(resetInputField, inactivityTimeout);
+            }
+
+            $('#search-icon').click(function() {
+                $(this).css('animation', 'slideIconOut 0.5s forwards').delay(500).queue(function() {
+                    $(this).addClass('hidden').dequeue();
+                });
+
+                $('#search-input').css('display', 'block')
+                    .css('animation', 'slideInputIn 0.5s forwards')
+                    .animate({ width: '200px' }, 500);
+
+                startInactivityTimer();
+            });
+
+            $('#search-input').on('input', function() {
+                startInactivityTimer();
+            });
+
+            $('#search-input').keypress(function(e) {
+                if (e.which == 13) {
+                    e.preventDefault();
+                    searchUsers();
+                }
+            });
+            function searchUsers() {
+                const searchQuery = $('#search-input').val().trim().toLowerCase();
+                if (searchQuery.length > 0) {
+                    const easterEggs = ['смысл жизни', 'the meaning of life', 'meaning of life'];
+                    const bagQuestions = ['что в мешочке?', "what's in the bag?"];
+                    const matrixQueries = ['матрица'];
+                    const secretMemes = ['секретный мем'];
+                    const error404 = ['404'];
+                    const pickMe = ['пикми'];
+                    const quitQueries = ['quit', 'выйти'];
+
+                    if (quitQueries.includes(searchQuery)) {
+                        window.location.href = '/logout';
+                    } else if (easterEggs.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Смысл жизни найден! Подождите... Ошибка 404: смысл не найден. Может, попробуешь поискать котиков?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (bagQuestions.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ничего особенного... просто немного мемов и чья-то забытая уверенность в себе.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (matrixQueries.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Красная или синяя таблетка?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (secretMemes.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ты нашел секретный мем! Но он настолько секретный, что мы его забыли.
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (error404.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Ошибка 404: здоровый сон не найден. Но мы нашли тебе кучу мемов!
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else if (pickMe.includes(searchQuery)) {
+                        $('#user-results').html(`
+                            <div class="easter-egg-message">
+                                Если надо себя выделять, чтобы понравиться, может, стоит пересмотреть, кому ты пытаешься понравиться?
+                            </div>
+                        `);
+                        $('main').hide();
+                        $('.sidebar').hide();
+                        $('.user-square').show();
+                    } else {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/search_users',
+                            data: { search_query: $('#search-input').val() },
+                            success: function(response) {
+                                const userResults = $('#user-results');
+                                userResults.empty();
+                                response.forEach(user => {
+                                    const userId = user.userid || 'defaultId';
+                                    const verifiedIcon = user.is_verified ? `<img src="/static/images/verified.png" alt="Verified" class="verified-icon">` : '';
+
+                                    userResults.append(`
+                                        <div class="user-result">
+                                            <img src="${user.avatar}" alt="${user.nickname}'s avatar" />
+                                            <a href="/profile/${userId}" class="user-nickname">${user.nickname}</a>
+                                            ${verifiedIcon}
+                                            <span>${user.subscriber_count} {{ tr['subscribers'] }}</span>
+                                        </div>
+                                    `);
+                                });
+                                $('.user-square').show();
+
+                                setTimeout(() => {
+                                    $('.user-result').each(function() {
+                                        $(this).addClass('visible');
+                                    });
+                                }, 1000);
+                            }
+                        });
+                        $('main').hide();
+                        $('.sidebar').hide();
+                    }
+                } else {
+                    $('.user-square').hide();
+                    $('main').show();
+                    $('.sidebar').show();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
